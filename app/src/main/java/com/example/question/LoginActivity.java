@@ -3,6 +3,7 @@ package com.example.question;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -33,10 +34,23 @@ public class LoginActivity extends AppCompatActivity {
     private boolean isPressed=false;
     private Button button;
 
+    public void setUsername(String username){
+        this.username=username;
+    }
+
+    public void setPassword(){
+        this.password=password;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        Intent intent=new Intent(LoginActivity.this,MainActivity.class);
+        startActivity(intent);
+        finish();
+
         mUsernameView = (AutoCompleteTextView) findViewById(R.id.email);
         mPasswordView = (EditText) findViewById(R.id.password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -69,8 +83,8 @@ public class LoginActivity extends AppCompatActivity {
         public void run() {
             try {
                 OkHttpClient client = new OkHttpClient.Builder()
-                        .connectTimeout(3, TimeUnit.SECONDS)
-                        .readTimeout(3, TimeUnit.SECONDS)
+                        .connectTimeout(10, TimeUnit.SECONDS)
+                        .readTimeout(10, TimeUnit.SECONDS)
                         .build();
                 FormBody formBody = new FormBody.Builder()
                         .add("grant_type", "password")
@@ -82,6 +96,7 @@ public class LoginActivity extends AppCompatActivity {
                         .post(formBody)
                         .build();
                 Response response = client.newCall(request).execute();
+                Log.e("状态码：",String.valueOf(response.code()));
                 String responseData = response.body().string();
                 if (responseData != null) {
                     if (responseData.substring(2, 14).equals("access_token")) {
@@ -90,11 +105,10 @@ public class LoginActivity extends AppCompatActivity {
                         startActivity(intent);
                         finish();
                     } else {
-//                        uiToast(responseData);
-                        uiToast("用户名或密码错误");
+                        uiError("用户名或密码错误");
                     }
                 } else {
-                    uiToast("网络连接失败");
+                    uiError("网络连接失败");
                 }
             } catch (SocketTimeoutException s) {
                 uiToast("连接超时，请检查网络设置");
@@ -119,6 +133,15 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void run() {
                 Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void uiError(final String text){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mUsernameView.setError(text);
             }
         });
     }
@@ -149,6 +172,12 @@ public class LoginActivity extends AppCompatActivity {
         } else {
             new Thread(runnable).start();
         }
+    }
+
+    public void register(View view) {
+        Intent intent=new Intent(LoginActivity.this,RegisterActivity.class);
+        startActivity(intent);
+        finish();
     }
 }
 
