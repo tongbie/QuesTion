@@ -30,7 +30,7 @@ import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
     private String authorization = "";
-    private long backTime=0;
+    private long backTime = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
