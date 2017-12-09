@@ -28,15 +28,15 @@ public class LoginActivity extends AppCompatActivity {
     public String password = "";
     private AutoCompleteTextView mUsernameView;
     private EditText mPasswordView;
-    private boolean isPressed=false;
+    private boolean isPressed = false;
     private Button button;
 
-    public void setUsername(String username){
-        this.username=username;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
-    public void setPassword(String password){
-        this.password=password;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     @Override
@@ -62,8 +62,8 @@ public class LoginActivity extends AppCompatActivity {
         button.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(isPressed==false) {
-                    isPressed=true;
+                if (isPressed == false) {
+                    isPressed = true;
                     button.setBackground(getDrawable(R.drawable.login_button1));
                     attemptLogin();
                 }
@@ -73,56 +73,6 @@ public class LoginActivity extends AppCompatActivity {
         mPasswordView.setText("Aa1111.");
     }
 
-    public Runnable runnable=new Runnable() {
-        @Override
-        public void run() {
-            try {
-                OkHttpClient client = new OkHttpClient.Builder()
-                        .connectTimeout(10, TimeUnit.SECONDS)
-                        .readTimeout(10, TimeUnit.SECONDS)
-                        .build();
-                FormBody formBody = new FormBody.Builder()
-                        .add("grant_type", "password")
-                        .add("userName", username)
-                        .add("password", password)
-                        .build();
-                Request request = new Request.Builder()
-                        .url("http://123.206.90.123:8051/token")
-                        .post(formBody)
-                        .build();
-                Response response = client.newCall(request).execute();
-                Log.e("Login response: ",response.toString());
-                String responseData = response.body().string();
-                Log.e("Lonin responseData: ",responseData);
-                if (responseData != null) {
-                    if (responseData.substring(2, 14).equals("access_token")) {
-                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                        intent.putExtra("ResponseData", responseData);
-                        startActivity(intent);
-                        finish();
-                    } else {
-                        uiError("用户名或密码错误");
-                    }
-                } else {
-                    uiError("网络连接失败");
-                }
-            } catch (SocketTimeoutException s) {
-                uiToast("连接超时，请检查网络设置");
-            } catch (IOException i) {
-                uiToast("数据获取失败，请检查网络设置");
-            } catch (Exception e) {
-                e.printStackTrace();
-                uiToast("出现未知错误");
-            }
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    button.setBackground(getDrawable(R.drawable.login_button));
-                    isPressed=false;
-                }
-            });
-        }
-    };
 
     private void uiToast(final String text) {
         runOnUiThread(new Runnable() {
@@ -133,7 +83,7 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void uiError(final String text){
+    private void uiError(final String text) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -163,7 +113,7 @@ public class LoginActivity extends AppCompatActivity {
         }
         if (cancel) {
             focusView.requestFocus();
-            isPressed=false;
+            isPressed = false;
             button.setBackground(getDrawable(R.drawable.login_button));
         } else {
             new Thread(runnable).start();
@@ -171,9 +121,60 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void register(View view) {
-        Intent intent=new Intent(LoginActivity.this,RegisterActivity.class);
+        Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
         startActivity(intent);
         finish();
     }
+
+    Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                OkHttpClient client = new OkHttpClient.Builder()
+                        .connectTimeout(20, TimeUnit.SECONDS)
+                        .readTimeout(20, TimeUnit.SECONDS)
+                        .build();
+                FormBody formBody = new FormBody.Builder()
+                        .add("grant_type", "password")
+                        .add("userName", username)
+                        .add("password", password)
+                        .build();
+                Request request = new Request.Builder()
+                        .url("http://123.206.90.123:8051/token")
+                        .post(formBody)
+                        .build();
+                Response response = client.newCall(request).execute();
+                Log.e("Login response: ", response.toString());
+                String responseData = response.body().string();
+                Log.e("Lonin responseData: ", responseData);
+                if (responseData != null) {
+                    if (responseData.substring(2, 14).equals("access_token")) {
+                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                        intent.putExtra("ResponseData", responseData);
+                        startActivity(intent);
+                        finish();
+                    } else {
+                        uiError("用户名或密码错误");
+                    }
+                } else {
+                    uiError("网络连接失败");
+                }
+            } catch (SocketTimeoutException s) {
+                uiToast("连接超时，请检查网络设置");
+            } catch (IOException i) {
+                uiToast("数据获取失败，请检查网络设置");
+            } catch (Exception e) {
+                e.printStackTrace();
+                uiToast("出现未知错误");
+            }
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    button.setBackground(getDrawable(R.drawable.login_button));
+                    isPressed = false;
+                }
+            });
+        }
+    };
 }
 

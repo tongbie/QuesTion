@@ -3,15 +3,14 @@ package com.example.question;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -23,12 +22,13 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemClickListener {
+public class MainActivity extends AppCompatActivity {
     private String authorization = "";
     private long backTime = 0;
-    RecyclerView recyclerView;
-    List<MyButton> mButtons;
-    private List<Fruit> fruitList=new ArrayList<>();
+    private List<QuestionTitle> questionTitleList = new ArrayList<>();
+    private ListView listView;
+    private List<String> examinationName = new ArrayList<>();
+    private List<String> examinationId=new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,52 +41,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String bearer = accessTokenGson.getToken_type();
         String assess_token = accessTokenGson.getAccess_token();
         authorization = bearer + " " + assess_token;
-
-        /*mButtons = new ArrayList<MyButton>();
-        addQuestionTitle();
-        recyclerView = (RecyclerView) findViewById(R.id.listView);
-        LinearLayoutManager linearLayoutManager=new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(linearLayoutManager);
-        QuestionTitleAdapter questionTitleAdapter=new QuestionTitleAdapter(mButtons);
-        recyclerView.setAdapter(questionTitleAdapter);*/
-//        listView.setDivider(null);
-//        listView.setDividerHeight(20);
-//        addQuestions();
+        new Thread(runnable).start();
 
 
-        /*for (int i = 0; i < mButtons.size(); i++) {
-            mButtons.get(i).setTag(i);
-            mButtons.get(i).setText("sgit");
-            mButtons.get(i).setOnClickListener(this);
-
-        }*/
-        addQuestionTitle();
-        FruitAdapter fruitAdapter=new FruitAdapter(MainActivity.this,R.layout.mybutton,fruitList);
-        ListView listView=(ListView)findViewById(R.id.listView);
-        listView.setDivider(null);
-        listView.setDividerHeight(20);
-        listView.setAdapter(fruitAdapter);
-        listView.setOnItemClickListener(this);
     }
 
     private void addQuestionTitle() {
-
-        for (int i = 0; i < 20; i++) {
-            Fruit fruit=new Fruit("问题 "+String.valueOf(i));
-            fruitList.add(fruit);
-            /*MyButton button = new MyButton(getApplicationContext());
-            button.setText("shit");
-            mButtons.add(button);*/
-//            button.setTag(i);
-//            button.setBackgroundColor(Color.parseColor("#ffffff"));
-            /*button.setText("问题 "+String.valueOf(i)+"\n");
-            button.setTextColor(Color.BLACK);
-            button.setTextSize(15);*/
-//            mButtons.get(i).setText("问题 "+String.valueOf(i)+"\n");
+        for (int i = 0; i < examinationName.size(); i++) {
+            QuestionTitle questionTitle = new QuestionTitle("\n  " + examinationName.get(i) + "\n");
+            questionTitleList.add(questionTitle);
         }
+        QuestionTitleAdatper questionTitleAdatper = new QuestionTitleAdatper(MainActivity.this, R.layout.question_title_item, questionTitleList);
+        listView = (ListView) findViewById(R.id.listView);
+        listView.setDivider(null);
+        listView.setDividerHeight(24);
+        listView.setAdapter(questionTitleAdatper);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+//                Intent intent = new Intent(MainActivity.this, QuestionActivity.class);
+//                startActivity(intent);
 
-//        MyButtonAdapter myButtonAdapter = new MyButtonAdapter(this, mButtons);
-//        listView.setAdapter(myButtonAdapter);
+            }
+        });
     }
 
     private void uiToast(final String text) {
@@ -98,16 +75,117 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
-    /* 获取数据按钮 */
+
+
+private class MainRunnable implements Runnable{
+
+    @Override
+    public void run() {
+        try {
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(20, TimeUnit.SECONDS)
+                    .readTimeout(20, TimeUnit.SECONDS)
+                    .build();
+            Request request = new Request.Builder()
+                    .url("http://123.206.90.123:8051/api/Questionnaire/GetList")//.url("https://123.206.90.123:443/api/class")
+                    .addHeader("Authorization", authorization)
+                    .build();
+            Response response = client.newCall(request).execute();
+            Log.e("Main response ", response.toString());
+            String responseData = response.body().string();
+            Log.e("Main responseData ", responseData.toString());
+            if (responseData != null&&(String.valueOf(response.code()).charAt(0)=='2')) {
+                try {
+                    Gson gson = new Gson();
+                    List<QuestionTitleGson> questionTitleGson = gson.fromJson(responseData, new TypeToken<List<QuestionTitleGson>>() {
+                    }.getType());
+                    for(int i=0;i<Integer.parseInt(questionTitleGson.get(0).getQuestionNum())-1;i++) {
+                        examinationName.add(questionTitleGson.get(i).getExaminationName());
+                        examinationId.add(questionTitleGson.get(i).getExaminationId());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    uiToast("数据解析错误");
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        addQuestionTitle();
+                    }
+                });
+            }
+        } catch (SocketTimeoutException s) {
+            uiToast("连接超时，请检查网络设置");
+        } catch (IOException i) {
+            uiToast("数据获取失败，请检查网络设置");
+            i.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+            uiToast("出现未知错误");
+        }
+    }
+}
+
+    private Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                OkHttpClient client = new OkHttpClient.Builder()
+                        .connectTimeout(20, TimeUnit.SECONDS)
+                        .readTimeout(20, TimeUnit.SECONDS)
+                        .build();
+                Request request = new Request.Builder()
+                        .url("http://123.206.90.123:8051/api/Questionnaire/GetList")//.url("https://123.206.90.123:443/api/class")
+                        .addHeader("Authorization", authorization)
+                        .build();
+                Response response = client.newCall(request).execute();
+                Log.e("Main response ", response.toString());
+                String responseData = response.body().string();
+                Log.e("Main responseData ", responseData.toString());
+                if (responseData != null&&(String.valueOf(response.code()).charAt(0)=='2')) {
+                    try {
+                        Gson gson = new Gson();
+                        List<QuestionTitleGson> questionTitleGson = gson.fromJson(responseData, new TypeToken<List<QuestionTitleGson>>() {
+                        }.getType());
+                        for(int i=0;i<Integer.parseInt(questionTitleGson.get(0).getQuestionNum())-1;i++) {
+                            examinationName.add(questionTitleGson.get(i).getExaminationName());
+                            examinationId.add(questionTitleGson.get(i).getExaminationId());
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        uiToast("数据解析错误");
+                    }
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            addQuestionTitle();
+                        }
+                    });
+                }
+            } catch (SocketTimeoutException s) {
+                uiToast("连接超时，请检查网络设置");
+            } catch (IOException i) {
+                uiToast("数据获取失败，请检查网络设置");
+                i.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+                uiToast("出现未知错误");
+            }
+        }
+    };
+
+
+
+    /* 获取数据按钮 *//*
     public void click(View view) {
         try {
             new Thread(runnable).start();
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
-    /* 双击返回 */
+    /* 双击返回 *//*
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
@@ -121,80 +199,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return true;
         }
         return super.onKeyDown(keyCode, event);
-    }
-
-    @Override
-    public void onClick(View view) {
-        int tag=(int)view.getTag();
-        uiToast(String.valueOf(tag));
-    }
-
-    private Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-            try {
-                /*X509TrustManager xtm = new X509TrustManager() {
-                    @Override
-                    public void checkServerTrusted(X509Certificate[] chain, String authType) {
-                    }
-
-                    @Override
-                    public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-                    }
-
-                    @Override
-                    public X509Certificate[] getAcceptedIssuers() {
-                        X509Certificate[] x509Certificates = new X509Certificate[0];
-                        return x509Certificates;
-                    }
-                };
-                SSLContext sslContext = null;
-                try {
-                    sslContext = SSLContext.getInstance("SSL");
-                    sslContext.init(null, new TrustManager[]{xtm}, new SecureRandom());
-                } catch (
-                        NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                } catch (
-                        KeyManagementException e) {
-                    e.printStackTrace();
-                }
-                HostnameVerifier DO_NOT_VERIFY = new HostnameVerifier() {
-                    @Override
-                    public boolean verify(String hostname, SSLSession session) {
-                        return true;
-                    }
-                };*/
-                OkHttpClient client = new OkHttpClient.Builder()
-//                        .addInterceptor()
-//                        .sslSocketFactory(sslContext.getSocketFactory())
-//                        .hostnameVerifier(DO_NOT_VERIFY)
-                        .connectTimeout(10, TimeUnit.SECONDS)
-                        .readTimeout(10, TimeUnit.SECONDS)
-                        .build();
-                Request request = new Request.Builder()
-                        .url("http://123.206.90.123:8051/api/Account/UserInfo")//.url("https://123.206.90.123:443/api/class")
-                        .addHeader("Authorization", authorization)
-                        .build();
-                Response response = client.newCall(request).execute();
-                Log.e("Main response ",response.toString());
-                String responseData = response.body().string();
-                Log.e("Main responseData ",responseData.toString());
-            } catch (SocketTimeoutException s) {
-                uiToast("连接超时，请检查网络设置");
-            } catch (IOException i) {
-                uiToast("数据获取失败，请检查网络设置");
-                i.printStackTrace();
-            } catch (Exception e) {
-                e.printStackTrace();
-                uiToast("出现未知错误");
-            }
-        }
-    };
-
-    /* listView点击事件 */
-    @Override
-    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-
-    }
+    }*/
 }
