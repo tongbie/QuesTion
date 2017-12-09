@@ -1,12 +1,17 @@
 package com.example.question;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.widget.Button;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -18,56 +23,70 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemClickListener {
     private String authorization = "";
     private long backTime = 0;
-    ListView listView;
-    List<Button> mButtons;
+    RecyclerView recyclerView;
+    List<MyButton> mButtons;
+    private List<Fruit> fruitList=new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        /*Intent intent = getIntent();
+        Intent intent = getIntent();
         String responseData = intent.getStringExtra("ResponseData");
         Gson gson = new Gson();
         AccessTokenGson accessTokenGson = gson.fromJson(responseData, AccessTokenGson.class);
         String bearer = accessTokenGson.getToken_type();
         String assess_token = accessTokenGson.getAccess_token();
-        authorization = bearer + " " + assess_token;*/
-        listView = (ListView) findViewById(R.id.listView);
-//        addQuestions();
-        addQuestionTitle();
+        authorization = bearer + " " + assess_token;
 
-        for (int i = 0; i < mButtons.size(); i++) {
+        /*mButtons = new ArrayList<MyButton>();
+        addQuestionTitle();
+        recyclerView = (RecyclerView) findViewById(R.id.listView);
+        LinearLayoutManager linearLayoutManager=new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(linearLayoutManager);
+        QuestionTitleAdapter questionTitleAdapter=new QuestionTitleAdapter(mButtons);
+        recyclerView.setAdapter(questionTitleAdapter);*/
+//        listView.setDivider(null);
+//        listView.setDividerHeight(20);
+//        addQuestions();
+
+
+        /*for (int i = 0; i < mButtons.size(); i++) {
+            mButtons.get(i).setTag(i);
+            mButtons.get(i).setText("sgit");
             mButtons.get(i).setOnClickListener(this);
-        }
+
+        }*/
+        addQuestionTitle();
+        FruitAdapter fruitAdapter=new FruitAdapter(MainActivity.this,R.layout.mybutton,fruitList);
+        ListView listView=(ListView)findViewById(R.id.listView);
+        listView.setDivider(null);
+        listView.setDividerHeight(20);
+        listView.setAdapter(fruitAdapter);
+        listView.setOnItemClickListener(this);
     }
 
     private void addQuestionTitle() {
-        mButtons = new ArrayList<Button>();
-        for (int i = 0; i < 20; i++) {
-            Button button = new Button(getApplicationContext());
-            button.setTag(i);
-            mButtons.add(button);
-        }
-        MyButtonAdapter myButtonAdapter = new MyButtonAdapter(this, mButtons);
-        listView.setAdapter(myButtonAdapter);
-    }
 
-    private void addQuestions() {
-        List<GoogleCard> mCards = new ArrayList<GoogleCard>();
         for (int i = 0; i < 20; i++) {
-            GoogleCard mCard = new GoogleCard("shfaihe");
-            mCards.add(mCard);
+            Fruit fruit=new Fruit("问题 "+String.valueOf(i));
+            fruitList.add(fruit);
+            /*MyButton button = new MyButton(getApplicationContext());
+            button.setText("shit");
+            mButtons.add(button);*/
+//            button.setTag(i);
+//            button.setBackgroundColor(Color.parseColor("#ffffff"));
+            /*button.setText("问题 "+String.valueOf(i)+"\n");
+            button.setTextColor(Color.BLACK);
+            button.setTextSize(15);*/
+//            mButtons.get(i).setText("问题 "+String.valueOf(i)+"\n");
         }
-        GoogleCardAdapter mAdapter = new GoogleCardAdapter(this, mCards);
-        listView.setAdapter(mAdapter);
 
-        /*QuestionTitle questionTitle=new QuestionTitle();
-        questionTitles.add(questionTitle);
-        ListAdapter adapter=new ArrayAdapter<QuestionTitle>(this,questionTitles);
-        listView.setAdapter(adapter);*/
+//        MyButtonAdapter myButtonAdapter = new MyButtonAdapter(this, mButtons);
+//        listView.setAdapter(myButtonAdapter);
     }
 
     private void uiToast(final String text) {
@@ -154,12 +173,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .readTimeout(10, TimeUnit.SECONDS)
                         .build();
                 Request request = new Request.Builder()
-                        .url("http://123.206.90.123:8051/api/class")//.url("https://123.206.90.123:443/api/class")
+                        .url("http://123.206.90.123:8051/api/Account/UserInfo")//.url("https://123.206.90.123:443/api/class")
                         .addHeader("Authorization", authorization)
                         .build();
                 Response response = client.newCall(request).execute();
+                Log.e("Main response ",response.toString());
                 String responseData = response.body().string();
-                uiToast(responseData);
+                Log.e("Main responseData ",responseData.toString());
             } catch (SocketTimeoutException s) {
                 uiToast("连接超时，请检查网络设置");
             } catch (IOException i) {
@@ -171,4 +191,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     };
+
+    /* listView点击事件 */
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+    }
 }

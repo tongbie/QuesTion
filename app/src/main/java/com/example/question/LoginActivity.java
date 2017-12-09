@@ -23,12 +23,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-/**
- * A login screen that offers login via email/password.
- */
 public class LoginActivity extends AppCompatActivity {
-    private String username = "";
-    private String password = "";
+    public String username = "";
+    public String password = "";
     private AutoCompleteTextView mUsernameView;
     private EditText mPasswordView;
     private boolean isPressed=false;
@@ -38,7 +35,7 @@ public class LoginActivity extends AppCompatActivity {
         this.username=username;
     }
 
-    public void setPassword(){
+    public void setPassword(String password){
         this.password=password;
     }
 
@@ -46,11 +43,9 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-
-        Intent intent=new Intent(LoginActivity.this,MainActivity.class);
+        /*Intent intent=new Intent(LoginActivity.this,MainActivity.class);
         startActivity(intent);
-        finish();
-
+        finish();*/
         mUsernameView = (AutoCompleteTextView) findViewById(R.id.email);
         mPasswordView = (EditText) findViewById(R.id.password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -74,11 +69,11 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
         });
-        mUsernameView.setText("admin");
-        mPasswordView.setText("111111");
+        mUsernameView.setText("g@g.g");
+        mPasswordView.setText("Aa1111.");
     }
 
-    private Runnable runnable=new Runnable() {
+    public Runnable runnable=new Runnable() {
         @Override
         public void run() {
             try {
@@ -96,8 +91,9 @@ public class LoginActivity extends AppCompatActivity {
                         .post(formBody)
                         .build();
                 Response response = client.newCall(request).execute();
-                Log.e("状态码：",String.valueOf(response.code()));
+                Log.e("Login response: ",response.toString());
                 String responseData = response.body().string();
+                Log.e("Lonin responseData: ",responseData);
                 if (responseData != null) {
                     if (responseData.substring(2, 14).equals("access_token")) {
                         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
