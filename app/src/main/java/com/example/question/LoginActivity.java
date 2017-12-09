@@ -120,6 +120,7 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    /* 按钮方法 */
     public void register(View view) {
         Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
         startActivity(intent);
