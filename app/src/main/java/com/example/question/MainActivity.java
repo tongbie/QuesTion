@@ -1,11 +1,13 @@
 package com.example.question;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -19,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -35,14 +38,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Window window = getWindow();
+        window.setStatusBarColor(Color.parseColor("#007bbb"));
         setContentView(R.layout.activity_main);
         Intent intent = getIntent();
-        authorization=intent.getStringExtra("Authorization");
+        authorization = intent.getStringExtra("Authorization");
         client = new OkHttpClient.Builder()
                 .connectTimeout(20, TimeUnit.SECONDS)
                 .readTimeout(20, TimeUnit.SECONDS)
                 .build();
-        new Thread(getQuestionTitle).start();
+        new Thread(getQuestionTitleRunnable).start();
 
 
     }
@@ -60,8 +65,6 @@ public class MainActivity extends AppCompatActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-//                Intent intent = new Intent(MainActivity.this, QuestionActivity.class);
-//                startActivity(intent);
                 GetQuestion getQuestion = new GetQuestion();
                 getQuestion.setId(examinationId.get(i));
                 new Thread(getQuestion).start();
@@ -78,7 +81,8 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private Runnable getQuestionTitle = new Runnable() {
+    /* 获取问卷标题信息Runnable */
+    private Runnable getQuestionTitleRunnable = new Runnable() {
         @Override
         public void run() {
             try {
@@ -120,6 +124,45 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+
+    /* 注销Runnable */
+    private Runnable logoutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                FormBody formBody = new FormBody.Builder()
+                        .build();
+                Request request = new Request.Builder()
+                        .url("http://123.206.90.123:8051/api/Account/Logout")
+                        .addHeader("Authorization", authorization)
+                        .post(formBody)
+                        .build();
+                Response response = client.newCall(request).execute();
+                if (String.valueOf(response.code()).charAt(0) == '2') {
+                    Intent clearDataIntent=new Intent("com.example.question.MainActivity.LOGOUT");
+                    sendBroadcast(clearDataIntent);
+                    Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                    startActivity(intent);
+                    finish();
+                }
+            } catch (SocketTimeoutException s) {
+                uiToast("连接超时，请检查网络设置");
+            } catch (IOException i) {
+                uiToast("数据获取失败，请检查网络设置");
+                i.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+                uiToast("出现未知错误");
+            }
+        }
+    };
+
+    /* 登出按钮 */
+    public void LOGOUT(View view) {
+        new Thread(logoutRunnable).start();
+    }
+
+    /* 跳转问题界面Runnable */
     private class GetQuestion implements Runnable {
         private String Id = "";
 
@@ -141,9 +184,9 @@ public class MainActivity extends AppCompatActivity {
                 if (responseData != null && (String.valueOf(response.code()).charAt(0) == '2')) {
                     Intent intent = new Intent(MainActivity.this, QuestionActivity.class);
                     intent.putExtra("ResponseData", responseData);
-                    intent.putExtra("Authorization",authorization);
+                    intent.putExtra("Authorization", authorization);
                     startActivity(intent);
-                }else {
+                } else {
                     uiToast("数据解析错误");
                 }
             } catch (SocketTimeoutException s) {
@@ -173,4 +216,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return super.onKeyDown(keyCode, event);
     }
+
+
 }

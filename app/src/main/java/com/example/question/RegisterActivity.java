@@ -1,6 +1,5 @@
 package com.example.question;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -137,6 +136,7 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
+    /* 注册账号认证 */
     private void attemptLogin() {
         mPasswordView.setError(null);
         mPasswordView1.setError(null);
@@ -175,16 +175,13 @@ public class RegisterActivity extends AppCompatActivity {
     /* 判断邮箱格式 */
     public static boolean isEmail(String email){
         if (null==email || "".equals(email)) return false;
-        //Pattern p = Pattern.compile("\\w+@(\\w+.)+[a-z]{2,3}"); //简单匹配
-        Pattern p =  Pattern.compile("\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*");//复杂匹配
+        Pattern p =  Pattern.compile("\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*");
         Matcher m = p.matcher(email);
         return m.matches();
     }
 
     /* 返回登录页面按钮 */
     public void back_to_login(View view) {
-        Intent intent=new Intent(RegisterActivity.this,LoginActivity.class);
-        startActivity(intent);
         finish();
     }
 }

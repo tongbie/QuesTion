@@ -8,11 +8,35 @@
     android:background="#bebebe"
     tools:context="com.example.question.MainActivity">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="#007bbb">
+        <TextView
+            android:layout_marginLeft="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="问卷调查"
+            android:textColor="#ffffff"
+            android:textSize="24dp"
+            android:gravity="center" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+
+        <ImageButton
+            android:onClick="LOGOUT"
+            android:background="@drawable/logout"
+            android:layout_width="60dp"
+            android:layout_height="60dp" />
+    </LinearLayout>
+
     <ListView
         android:id="@+id/listView"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:layout_marginTop="6dp"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 

@@ -13,7 +13,7 @@ import android.widget.TextView;
  * Created by aaa on 2017/12/9.
  */
 
-public class Question extends LinearLayout {
+public class Question_SignleSelection extends LinearLayout {
 
     private TextView textView;
     private RadioGroup radioGroup;
@@ -34,7 +34,7 @@ public class Question extends LinearLayout {
         return answer;
     }
 
-    public Question(Context context,String text,String[] options) {
+    public Question_SignleSelection(Context context, String text, String[] options) {
         super(context);
         this.setOrientation(1);
         this.setBackground(getResources().getDrawable(R.drawable.question_title_background));
@@ -59,13 +59,11 @@ public class Question extends LinearLayout {
         this.addView(radioGroup);
     }
 
-    public Question(Context context, @Nullable AttributeSet attrs) {
+    public Question_SignleSelection(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public Question(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public Question_SignleSelection(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
-
-
 }

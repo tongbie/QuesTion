@@ -1,5 +1,6 @@
 package com.example.question;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -28,30 +29,19 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class LoginActivity extends AppCompatActivity {
-    public String username = "";
-    public String password = "";
+    private String username = "";
+    private String password = "";
     private AutoCompleteTextView mUsernameView;
     private EditText mPasswordView;
     private boolean isPressed = false;
     private Button button;
-    private SharedPreferences sharedPreferences;
+    private static SharedPreferences sharedPreferences;
     private String authorization = "";
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        /*Intent intent=new Intent(LoginActivity.this,MainActivity.class);
-        startActivity(intent);
-        finish();*/
         mUsernameView = (AutoCompleteTextView) findViewById(R.id.email);
         mPasswordView = (EditText) findViewById(R.id.password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -75,8 +65,6 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
         });
-        mUsernameView.setText("g@g.g");
-        mPasswordView.setText("Aa1111.");
         try {
             sharedPreferences = getSharedPreferences("authorization", Context.MODE_PRIVATE);
             authorization = sharedPreferences.getString("authorization", null);
@@ -92,8 +80,9 @@ public class LoginActivity extends AppCompatActivity {
             editor.clear();
             editor.commit();
         }
+        mUsernameView.setText("g@g.g");
+        mPasswordView.setText("Aa1111.");
     }
-
 
     private void uiToast(final String text) {
         runOnUiThread(new Runnable() {
@@ -137,18 +126,18 @@ public class LoginActivity extends AppCompatActivity {
             isPressed = false;
             button.setBackground(getDrawable(R.drawable.login_button));
         } else {
-            new Thread(runnable).start();
+            new Thread(loginRunnable).start();
         }
     }
 
-    /* 按钮方法 */
+    /* 注册按钮方法 */
     public void register(View view) {
         Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
         startActivity(intent);
-        finish();
     }
 
-    Runnable runnable = new Runnable() {
+    /* 登录并获取Access_Token */
+    Runnable loginRunnable = new Runnable() {
         @Override
         public void run() {
             try {
@@ -181,6 +170,7 @@ public class LoginActivity extends AppCompatActivity {
                             sharedPreferences.edit().putString("authorization", authorization).commit();
                         }catch (Exception e){
                             e.printStackTrace();
+                            uiToast("服务器维护中");
                         }
                         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                         intent.putExtra("Authorization", authorization);
@@ -209,5 +199,15 @@ public class LoginActivity extends AppCompatActivity {
             });
         }
     };
+
+    /* 广播接收器，用以来自MainActivity注销的跳转并清空本地token */
+    public static class MyBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.clear();
+            editor.commit();
+        }
+    }
 }
 
