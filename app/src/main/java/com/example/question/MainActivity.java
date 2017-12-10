@@ -3,6 +3,7 @@ package com.example.question;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -34,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private List<String> examinationName = new ArrayList<>();
     private List<String> examinationId = new ArrayList<>();
     private OkHttpClient client;
+    private SwipeRefreshLayout refresh;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +50,21 @@ public class MainActivity extends AppCompatActivity {
                 .readTimeout(20, TimeUnit.SECONDS)
                 .build();
         new Thread(getQuestionTitleRunnable).start();
-
+        refresh=(SwipeRefreshLayout)findViewById(R.id.refresh);
+        refresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                if (refresh.getVerticalScrollbarPosition() == 0) {
+                    questionTitleList.clear();
+                    examinationId.clear();
+                    examinationName.clear();
+                    new Thread(getQuestionTitleRunnable).start();
+                }else {
+                    refresh.setRefreshing(false);
+                    return;
+                }
+            }
+        });
 
     }
 
@@ -121,6 +137,14 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
                 uiToast("出现未知错误");
             }
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if(refresh.isRefreshing()) {
+                        refresh.setRefreshing(false);
+                    }
+                }
+            });
         }
     };
 

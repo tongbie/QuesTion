@@ -11,7 +11,7 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/sign"
         android:label="问卷调查"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
@@ -34,7 +34,8 @@
             android:name=".RegisterActivity"
             android:label="@string/title_activity_register"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-        <activity android:name=".QuestionActivity"></activity>
+        <activity android:name=".QuestionActivity"
+            android:launchMode="singleTop"></activity>
         <receiver android:name=".LoginActivity$MyBroadcastReceiver"
             android:enabled="true"
             android:exported="true">

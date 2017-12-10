@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -20,9 +19,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import okhttp3.FormBody;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class QuestionActivity extends AppCompatActivity {
@@ -30,20 +30,20 @@ public class QuestionActivity extends AppCompatActivity {
     private int questionSpace;
     private List<Question_SignleSelection> questions = new ArrayList<>();
     private List<String> questionString = new ArrayList<>();
-    //    private String[] option=new String[4];
     private List<String[]> options = new ArrayList<>();
     private List<String> answers = new ArrayList<String>();
     private String questionJson;
+    private boolean isPressed = false;
+    private String authorization = "";
+    private List<String> questionType = new ArrayList<>();
+    private List<QuestionGson> questionGsons;
+    private List<String> questionIds = new ArrayList<>();
+    private String questionAnstwerJson;
+    private Button button;
     private OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(20, TimeUnit.SECONDS)
             .readTimeout(20, TimeUnit.SECONDS)
             .build();
-    private boolean isPressed = false;
-    private String authorization = "";
-    private List<String> questionType = new ArrayList<>();
-    List<QuestionGson> questionGsons;
-    private List<String> questionIds = new ArrayList<>();
-    String questionAnstwerJson;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,7 +72,7 @@ public class QuestionActivity extends AppCompatActivity {
             }
         }
         addSpace();
-        final Button button = new Button(this);
+        button = new Button(this);
         button.setBackground(getResources().getDrawable(R.drawable.question_button));
         button.setTextSize(20);
         button.setTextColor(Color.parseColor("#ffffff"));
@@ -84,9 +84,8 @@ public class QuestionActivity extends AppCompatActivity {
                     answers.clear();
                     for (int i = 0; i < questions.size(); i++) {
                         answers.add(questions.get(i).getAnswer());
-                        Log.e("answer" + String.valueOf(i), answers.get(i));
-                        new Thread(submitRunnable).start();
                     }
+                    new Thread(submitRunnable).start();
                     isPressed = true;
                     button.setBackground(getResources().getDrawable(R.drawable.question_button1));
                 }
@@ -94,6 +93,11 @@ public class QuestionActivity extends AppCompatActivity {
         });
         linearLayout.addView(button);
         addSpace();
+        if(questions.size()==0){
+            button.setText("暂无问题");
+            isPressed = true;
+            button.setBackground(getResources().getDrawable(R.drawable.question_button1));
+        }
     }
 
     /* 加空隙 */
@@ -148,19 +152,21 @@ public class QuestionActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     e.printStackTrace();
                     uiToast("提交失败");
+                    uiButton(false);
                     return;
                 }
-                FormBody formBody = new FormBody.Builder()
-                        .add("Answer", questionAnstwerJson)
-                        .build();
+                RequestBody requestBody = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), questionAnstwerJson);
                 Request request = new Request.Builder()
                         .url("http://123.206.90.123:8051/api/Questionnaire/SubmitQuestionnaire")
                         .addHeader("Authorization", authorization)
-                        .post(formBody)
+                        .post(requestBody)
                         .build();
                 Response response = client.newCall(request).execute();
                 if (String.valueOf(response.code()).charAt(0) == '2') {
                     uiToast("提交成功");
+                    uiButton(false);
+                }else {
+                    uiToast("未提交");
                 }
             } catch (SocketTimeoutException s) {
                 uiToast("连接超时，请检查网络设置");
@@ -171,8 +177,29 @@ public class QuestionActivity extends AppCompatActivity {
                 e.printStackTrace();
                 uiToast("出现未知错误");
             }
+            uiButton(false);
         }
     };
+
+    private void uiButton(boolean pressed){
+        if(pressed==false) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    isPressed = false;
+                    button.setBackground(getResources().getDrawable(R.drawable.question_button));
+                }
+            });
+        }else {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    isPressed = true;
+                    button.setBackground(getResources().getDrawable(R.drawable.question_button1));
+                }
+            });
+        }
+    }
 
     private void uiToast(final String text) {
         runOnUiThread(new Runnable() {
