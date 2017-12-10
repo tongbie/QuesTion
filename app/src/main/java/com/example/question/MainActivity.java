@@ -37,16 +37,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Intent intent = getIntent();
-        String responseData = intent.getStringExtra("ResponseData");
+        authorization=intent.getStringExtra("Authorization");
         client = new OkHttpClient.Builder()
                 .connectTimeout(20, TimeUnit.SECONDS)
                 .readTimeout(20, TimeUnit.SECONDS)
                 .build();
-        Gson gson = new Gson();
-        AccessTokenGson accessTokenGson = gson.fromJson(responseData, AccessTokenGson.class);
-        String bearer = accessTokenGson.getToken_type();
-        String assess_token = accessTokenGson.getAccess_token();
-        authorization = bearer + " " + assess_token;
         new Thread(getQuestionTitle).start();
 
 
@@ -92,9 +87,7 @@ public class MainActivity extends AppCompatActivity {
                         .addHeader("Authorization", authorization)
                         .build();
                 Response response = client.newCall(request).execute();
-                Log.e("Main response ", response.toString());
                 String responseData = response.body().string();
-                Log.e("Main responseData ", responseData.toString());
                 if (responseData != null && (String.valueOf(response.code()).charAt(0) == '2')) {
                     try {
                         Gson gson = new Gson();
@@ -148,8 +141,8 @@ public class MainActivity extends AppCompatActivity {
                 if (responseData != null && (String.valueOf(response.code()).charAt(0) == '2')) {
                     Intent intent = new Intent(MainActivity.this, QuestionActivity.class);
                     intent.putExtra("ResponseData", responseData);
+                    intent.putExtra("Authorization",authorization);
                     startActivity(intent);
-                    finish();
                 }else {
                     uiToast("数据解析错误");
                 }
@@ -164,19 +157,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
-    ;
-
-
-
-    /* 获取数据按钮 *//*
-    public void click(View view) {
-        try {
-            new Thread(runnable).start();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }*/
 
     /* 双击返回 */
     @Override

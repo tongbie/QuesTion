@@ -1,6 +1,8 @@
 package com.example.question;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -13,6 +15,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -30,6 +34,8 @@ public class LoginActivity extends AppCompatActivity {
     private EditText mPasswordView;
     private boolean isPressed = false;
     private Button button;
+    private SharedPreferences sharedPreferences;
+    private String authorization = "";
 
     public void setUsername(String username) {
         this.username = username;
@@ -71,6 +77,21 @@ public class LoginActivity extends AppCompatActivity {
         });
         mUsernameView.setText("g@g.g");
         mPasswordView.setText("Aa1111.");
+        try {
+            sharedPreferences = getSharedPreferences("authorization", Context.MODE_PRIVATE);
+            authorization = sharedPreferences.getString("authorization", null);
+            if (authorization != null) {
+                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                intent.putExtra("Authorization", authorization);
+                startActivity(intent);
+                finish();
+            }
+        } catch (Exception e){
+            uiError("数据异常，请重启应用");
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.clear();
+            editor.commit();
+        }
     }
 
 
@@ -149,9 +170,20 @@ public class LoginActivity extends AppCompatActivity {
                 String responseData = response.body().string();
                 Log.e("Lonin responseData: ", responseData);
                 if (responseData != null) {
-                    if (responseData.substring(2, 14).equals("access_token")) {
+                    if (String.valueOf(response.code()).charAt(0)=='2') {
+                        try {
+                            Gson gson = new Gson();
+                            AccessTokenGson accessTokenGson = gson.fromJson(responseData, AccessTokenGson.class);
+                            String bearer = accessTokenGson.getToken_type();
+                            String assess_token = accessTokenGson.getAccess_token();
+                            authorization = bearer + " " + assess_token;
+                            sharedPreferences = getSharedPreferences("authorization", Context.MODE_PRIVATE);
+                            sharedPreferences.edit().putString("authorization", authorization).commit();
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
                         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                        intent.putExtra("ResponseData", responseData);
+                        intent.putExtra("Authorization", authorization);
                         startActivity(intent);
                         finish();
                     } else {
