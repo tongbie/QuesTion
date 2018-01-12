@@ -1,6 +1,7 @@
 package com.example.question;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -13,6 +14,9 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.example.question.Adapter.QuestionListAdatper;
+import com.example.question.Gson.QuestionListGson;
+import com.example.question.Question.QuestionListItem;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -20,22 +24,19 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
-    private String authorization = "";
-    private long backTime = 0;
-    private List<QuestionTitle> questionTitleList = new ArrayList<>();
+    private String authorization = LoginActivity.authorization;//签名
+    private long backTime = 0;//双击返回计时
+    private List<QuestionListItem> questionListItemList = new ArrayList<>();//问题标题List
     private ListView listView;
-    private List<String> examinationName = new ArrayList<>();
-    private List<String> examinationId = new ArrayList<>();
-    private OkHttpClient client;
-    private SwipeRefreshLayout refresh;
+    private List<String> examinationName = new ArrayList<>();//问题
+    private List<String> examinationId = new ArrayList<>();//问题Id
+    private SwipeRefreshLayout refresh;//下拉刷新
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,19 +44,13 @@ public class MainActivity extends AppCompatActivity {
         Window window = getWindow();
         window.setStatusBarColor(Color.parseColor("#007bbb"));
         setContentView(R.layout.activity_main);
-        Intent intent = getIntent();
-        authorization = intent.getStringExtra("Authorization");
-        client = new OkHttpClient.Builder()
-                .connectTimeout(20, TimeUnit.SECONDS)
-                .readTimeout(20, TimeUnit.SECONDS)
-                .build();
         new Thread(getQuestionTitleRunnable).start();
         refresh=(SwipeRefreshLayout)findViewById(R.id.refresh);
         refresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 if (refresh.getVerticalScrollbarPosition() == 0) {
-                    questionTitleList.clear();
+                    questionListItemList.clear();
                     examinationId.clear();
                     examinationName.clear();
                     new Thread(getQuestionTitleRunnable).start();
@@ -68,12 +63,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /* 向listView中添加问题标题，并启动getQuestion线程以获取具体问题 */
     private void addQuestionTitle() {
         for (int i = 0; i < examinationName.size(); i++) {
-            QuestionTitle questionTitle = new QuestionTitle("\n  " + examinationName.get(i) + "\n");
-            questionTitleList.add(questionTitle);
+            QuestionListItem questionListItem = new QuestionListItem("\n  " + examinationName.get(i) + "\n");
+            questionListItemList.add(questionListItem);
         }
-        QuestionTitleAdatper questionTitleAdatper = new QuestionTitleAdatper(MainActivity.this, R.layout.question_title_item, questionTitleList);
+        QuestionListAdatper questionTitleAdatper = new QuestionListAdatper(MainActivity.this, R.layout.question_title_item, questionListItemList);
         listView = (ListView) findViewById(R.id.listView);
         listView.setDivider(null);
         listView.setDividerHeight(24);
@@ -106,16 +102,16 @@ public class MainActivity extends AppCompatActivity {
                         .url("http://123.206.90.123:8051/api/Questionnaire/GetList")//.url("https://123.206.90.123:443/api/class")
                         .addHeader("Authorization", authorization)
                         .build();
-                Response response = client.newCall(request).execute();
+                Response response = ToolClass.client.newCall(request).execute();
                 String responseData = response.body().string();
                 if (responseData != null && (String.valueOf(response.code()).charAt(0) == '2')) {
                     try {
                         Gson gson = new Gson();
-                        List<QuestionTitleGson> questionTitleGson = gson.fromJson(responseData, new TypeToken<List<QuestionTitleGson>>() {
+                        List<QuestionListGson> questionListGson = gson.fromJson(responseData, new TypeToken<List<QuestionListGson>>() {
                         }.getType());
-                        for (int i = 0; i < questionTitleGson.size(); i++) {
-                            examinationName.add(questionTitleGson.get(i).getExaminationName());
-                            examinationId.add(questionTitleGson.get(i).getExaminationId());
+                        for (int i = 0; i < questionListGson.size(); i++) {
+                            examinationName.add(questionListGson.get(i).getExaminationName());
+                            examinationId.add(questionListGson.get(i).getExaminationId());
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -148,7 +144,6 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-
     /* 注销Runnable */
     private Runnable logoutRunnable = new Runnable() {
         @Override
@@ -161,10 +156,11 @@ public class MainActivity extends AppCompatActivity {
                         .addHeader("Authorization", authorization)
                         .post(formBody)
                         .build();
-                Response response = client.newCall(request).execute();
+                Response response = ToolClass.client.newCall(request).execute();
                 if (String.valueOf(response.code()).charAt(0) == '2') {
-                    Intent clearDataIntent=new Intent("com.example.question.MainActivity.LOGOUT");
-                    sendBroadcast(clearDataIntent);
+                    SharedPreferences.Editor editor = LoginActivity.sharedPreferences.edit();
+                    editor.clear();
+                    editor.commit();
                     Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                     startActivity(intent);
                     finish();
@@ -181,12 +177,17 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    /* 登出按钮 */
+    /* 注销按钮 */
     public void LOGOUT(View view) {
         new Thread(logoutRunnable).start();
     }
 
-    /* 跳转问题界面Runnable */
+    public void ADD(View view) {
+        Intent intent=new Intent(MainActivity.this,AddQuestionActivity.class);
+        startActivity(intent);
+    }
+
+    /* 该类用以向Runnable传值，并跳转问题界面*/
     private class GetQuestion implements Runnable {
         private String Id = "";
 
@@ -201,14 +202,13 @@ public class MainActivity extends AppCompatActivity {
                         .url("http://123.206.90.123:8051/api/Questionnaire/GetQuestions/" + Id)
                         .addHeader("Authorization", authorization)
                         .build();
-                Response response = client.newCall(request).execute();
+                Response response = ToolClass.client.newCall(request).execute();
                 Log.e("Main response1 ", response.toString());
                 String responseData = response.body().string();
                 Log.e("Main responseData1 ", responseData.toString());
                 if (responseData != null && (String.valueOf(response.code()).charAt(0) == '2')) {
-                    Intent intent = new Intent(MainActivity.this, QuestionActivity.class);
+                    Intent intent = new Intent(MainActivity.this, ShowQuestionActivity.class);
                     intent.putExtra("ResponseData", responseData);
-                    intent.putExtra("Authorization", authorization);
                     startActivity(intent);
                 } else {
                     uiToast("数据解析错误");
@@ -240,6 +240,4 @@ public class MainActivity extends AppCompatActivity {
         }
         return super.onKeyDown(keyCode, event);
     }
-
-
 }

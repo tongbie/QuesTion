@@ -1,10 +1,10 @@
-package com.example.question;
+package com.example.question.Gson;
 
 /**
  * Created by aaa on 2017/12/10.
  */
 
-public class QuestionAnswerGson {
+public class SubmitQuestionGson {
     private String QuestionId;
     private String Answer;
 

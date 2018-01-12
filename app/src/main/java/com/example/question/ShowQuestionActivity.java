@@ -10,6 +10,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.question.Gson.QuestionGson;
+import com.example.question.Gson.SubmitQuestionGson;
+import com.example.question.Question.SignleSelectQuestion;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -25,58 +28,51 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-public class QuestionActivity extends AppCompatActivity {
+public class ShowQuestionActivity extends AppCompatActivity {
     LinearLayout linearLayout;
-    private int questionSpace;
-    private List<Question_SignleSelection> questions = new ArrayList<>();
+    private List<SignleSelectQuestion> questions = new ArrayList<>();
     private List<String> questionString = new ArrayList<>();
     private List<String[]> options = new ArrayList<>();
     private List<String> answers = new ArrayList<String>();
     private String questionJson;
     private boolean isPressed = false;
-    private String authorization = "";
+    private String authorization =LoginActivity.authorization;
     private List<String> questionType = new ArrayList<>();
     private List<QuestionGson> questionGsons;
     private List<String> questionIds = new ArrayList<>();
     private String questionAnstwerJson;
     private Button button;
-    private OkHttpClient client = new OkHttpClient.Builder()
-            .connectTimeout(20, TimeUnit.SECONDS)
-            .readTimeout(20, TimeUnit.SECONDS)
-            .build();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_question);
         linearLayout = (LinearLayout) findViewById(R.id.root);
-        client = new OkHttpClient.Builder()
+        ToolClass.client = new OkHttpClient.Builder()
                 .connectTimeout(20, TimeUnit.SECONDS)
                 .readTimeout(20, TimeUnit.SECONDS)
                 .build();
         Intent intent = getIntent();
         questionJson = intent.getStringExtra("ResponseData");
-        authorization = intent.getStringExtra("Authorization");
-        questionSpace = (int) getResources().getDimension(R.dimen.question_space);
         getQuestion();
     }
 
     /* 添加问题 */
     private void initQuestion(int num) {
         for (int i = 0; i < num; i++) {
-            addSpace();
             if (questionType.get(i).equals("1")) {
-                Question_SignleSelection questionSignleSelection = new Question_SignleSelection(this, "  " + questionString.get(i), options.get(i));
+                SignleSelectQuestion questionSignleSelection = new SignleSelectQuestion(this, "  " + questionString.get(i), options.get(i));
                 questions.add(questionSignleSelection);
+                questionSignleSelection.setLayoutParams(ToolClass.spaceParams);
                 linearLayout.addView(questionSignleSelection);
             }
         }
-        addSpace();
         button = new Button(this);
         button.setBackground(getResources().getDrawable(R.drawable.question_button));
         button.setTextSize(20);
         button.setTextColor(Color.parseColor("#ffffff"));
         button.setText("提  交");
+        button.setLayoutParams(ToolClass.spaceParams);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -92,19 +88,14 @@ public class QuestionActivity extends AppCompatActivity {
             }
         });
         linearLayout.addView(button);
-        addSpace();
+        TextView space=new TextView(this);
+        space.setLayoutParams(ToolClass.spaceParams);
+        linearLayout.addView(space);
         if(questions.size()==0){
             button.setText("暂无问题");
             isPressed = true;
             button.setBackground(getResources().getDrawable(R.drawable.question_button1));
         }
-    }
-
-    /* 加空隙 */
-    private void addSpace() {
-        TextView textView = new TextView(this);
-        textView.setHeight(questionSpace);
-        linearLayout.addView(textView);
     }
 
     /* 获取问题 */
@@ -138,17 +129,17 @@ public class QuestionActivity extends AppCompatActivity {
             try {
                 try {
                     Gson gson = new Gson();
-                    List<QuestionAnswerGson> questionAnswerGsonList=new ArrayList<>();
-                    List<QuestionAnswerGson> questionAnswerGsons = gson.fromJson(questionAnswerGsonList.toString(), new TypeToken<List<QuestionAnswerGson>>() {
+                    List<SubmitQuestionGson> submitQuestionGsonList =new ArrayList<>();
+                    List<SubmitQuestionGson> submitQuestionGsons = gson.fromJson(submitQuestionGsonList.toString(), new TypeToken<List<SubmitQuestionGson>>() {
                     }.getType());
                     for(int i=0;i<questionGsons.size();i++){
-                        questionAnswerGsons.add(new QuestionAnswerGson());
+                        submitQuestionGsons.add(new SubmitQuestionGson());
                     }
                     for (int i = 0; i < questionGsons.size(); i++) {
-                        questionAnswerGsons.get(i).setAnswer(answers.get(i));
-                        questionAnswerGsons.get(i).setQuestionId(questionIds.get(i));
+                        submitQuestionGsons.get(i).setAnswer(answers.get(i));
+                        submitQuestionGsons.get(i).setQuestionId(questionIds.get(i));
                     }
-                    questionAnstwerJson = gson.toJson(questionAnswerGsons);
+                    questionAnstwerJson = gson.toJson(submitQuestionGsons);
                 } catch (Exception e) {
                     e.printStackTrace();
                     uiToast("提交失败");
@@ -161,7 +152,7 @@ public class QuestionActivity extends AppCompatActivity {
                         .addHeader("Authorization", authorization)
                         .post(requestBody)
                         .build();
-                Response response = client.newCall(request).execute();
+                Response response = ToolClass.client.newCall(request).execute();
                 if (String.valueOf(response.code()).charAt(0) == '2') {
                     uiToast("提交成功");
                     uiButton(false);

@@ -15,12 +15,10 @@ import android.widget.Toast;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
@@ -29,13 +27,13 @@ import okhttp3.Response;
  */
 public class RegisterActivity extends AppCompatActivity {
     private String password = "";
-    private String password1 = "";
-    private String email="";
+    private String password1 = "";//再次输入密码
+    private String email="";//账号
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
     private EditText mPasswordView1;
     private boolean isPressed=false;
-    private Button button;
+    private Button button;//注册按钮
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,14 +75,11 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
+    /* 注册账号Runnable */
     private Runnable runnable=new Runnable() {
         @Override
         public void run() {
             try {
-                OkHttpClient client = new OkHttpClient.Builder()
-                        .connectTimeout(10, TimeUnit.SECONDS)
-                        .readTimeout(10, TimeUnit.SECONDS)
-                        .build();
                 FormBody formBody = new FormBody.Builder()
                         .add("Email", email)
                         .add("Password", password)
@@ -94,7 +89,7 @@ public class RegisterActivity extends AppCompatActivity {
                         .url("http://123.206.90.123:8051/api/Account/Register")
                         .post(formBody)
                         .build();
-                Response response = client.newCall(request).execute();
+                Response response = ToolClass.client.newCall(request).execute();
                 Log.e("Register response ",request.toString());
                 Log.e("code",String.valueOf(response.code()));
                 String responseData = response.body().string();
@@ -136,7 +131,7 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
-    /* 注册账号认证 */
+    /* 判断注册账号格式，启动runnable */
     private void attemptLogin() {
         mPasswordView.setError(null);
         mPasswordView1.setError(null);

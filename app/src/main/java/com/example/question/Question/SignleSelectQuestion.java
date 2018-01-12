@@ -1,4 +1,4 @@
-package com.example.question;
+package com.example.question.Question;
 
 import android.content.Context;
 import android.support.annotation.Nullable;
@@ -9,11 +9,13 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
+import com.example.question.R;
+
 /**
  * Created by aaa on 2017/12/9.
  */
 
-public class Question_SignleSelection extends LinearLayout {
+public class SignleSelectQuestion extends LinearLayout {
 
     private TextView textView;
     private RadioGroup radioGroup;
@@ -34,7 +36,7 @@ public class Question_SignleSelection extends LinearLayout {
         return answer;
     }
 
-    public Question_SignleSelection(Context context, String text, String[] options) {
+    public SignleSelectQuestion(Context context, String text, String[] options) {
         super(context);
         this.setOrientation(1);
         this.setBackground(getResources().getDrawable(R.drawable.question_title_background));
@@ -59,11 +61,11 @@ public class Question_SignleSelection extends LinearLayout {
         this.addView(radioGroup);
     }
 
-    public Question_SignleSelection(Context context, @Nullable AttributeSet attrs) {
+    public SignleSelectQuestion(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public Question_SignleSelection(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public SignleSelectQuestion(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 }

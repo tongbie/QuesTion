@@ -1,13 +1,13 @@
-package com.example.question;
+package com.example.question.Question;
 
 /**
  * Created by aaa on 2017/12/9.
  */
 
-public class QuestionTitle {
+public class QuestionListItem {
     private String text;
 
-    public QuestionTitle(String text){
+    public QuestionListItem(String text){
         this.text=text;
     }
 

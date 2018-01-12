@@ -1,4 +1,4 @@
-package com.example.question;
+package com.example.question.Adapter;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -9,16 +9,19 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import com.example.question.Question.QuestionListItem;
+import com.example.question.R;
+
 import java.util.List;
 
 /**
  * Created by aaa on 2017/12/9.
  */
 
-public class QuestionTitleAdatper extends ArrayAdapter<QuestionTitle> {
+public class QuestionListAdatper extends ArrayAdapter<QuestionListItem> {
     private int resourceId;
 
-    public QuestionTitleAdatper(@NonNull Context context, int resource, List<QuestionTitle> objects) {
+    public QuestionListAdatper(@NonNull Context context, int resource, List<QuestionListItem> objects) {
         super(context, resource, objects);
         resourceId=resource;
     }
@@ -26,7 +29,7 @@ public class QuestionTitleAdatper extends ArrayAdapter<QuestionTitle> {
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        QuestionTitle questionTitle =getItem(position);
+        QuestionListItem questionListItem =getItem(position);
         View view;
         if(convertView==null) {
             view = LayoutInflater.from(getContext()).inflate(resourceId, parent, false);
@@ -34,7 +37,7 @@ public class QuestionTitleAdatper extends ArrayAdapter<QuestionTitle> {
             view=convertView;
         }
         TextView textView=(TextView)view.findViewById(R.id.question_title);
-        textView.setText(questionTitle.getText());
+        textView.setText(questionListItem.getText());
         return view;
     }
 }

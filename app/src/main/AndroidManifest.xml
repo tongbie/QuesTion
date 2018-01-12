@@ -16,14 +16,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-        </activity>
+        <activity
+            android:name=".MainActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"></activity>
         <activity
             android:name=".LoginActivity"
             android:label="问卷调查"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -34,15 +34,22 @@
             android:name=".RegisterActivity"
             android:label="@string/title_activity_register"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-        <activity android:name=".QuestionActivity"
-            android:launchMode="singleTop"></activity>
-        <receiver android:name=".LoginActivity$MyBroadcastReceiver"
+        <activity
+            android:name=".ShowQuestionActivity"
+            android:launchMode="singleTop" />
+
+        <receiver
+            android:name=".LoginActivity$MyBroadcastReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="com.example.question.MainActivity.LOGOUT"/>
+                <action android:name="com.example.question.MainActivity.LOGOUT" />
             </intent-filter>
         </receiver>
+
+        <activity android:name=".AddQuestionActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+        </activity>
     </application>
 
 </manifest>

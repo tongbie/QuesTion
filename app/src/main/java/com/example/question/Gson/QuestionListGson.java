@@ -1,10 +1,10 @@
-package com.example.question;
+package com.example.question.Gson;
 
 /**
  * Created by aaa on 2017/12/9.
  */
 
-public class QuestionTitleGson {
+public class QuestionListGson {
     /**
      * ExaminationId : 1
      * ExaminationName : 测试1

@@ -1,6 +1,5 @@
 package com.example.question;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -17,6 +16,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.question.Gson.AccessTokenGson;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -33,15 +33,15 @@ public class LoginActivity extends AppCompatActivity {
     private String password = "";
     private AutoCompleteTextView mUsernameView;
     private EditText mPasswordView;
-    private boolean isPressed = false;
-    private Button button;
-    private static SharedPreferences sharedPreferences;
-    private String authorization = "";
+    private Button button;//登录按钮
+    public static SharedPreferences sharedPreferences;//用来存储access_token
+    public static String authorization;//签名
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        ToolClass toolClass=new ToolClass();
         mUsernameView = (AutoCompleteTextView) findViewById(R.id.email);
         mPasswordView = (EditText) findViewById(R.id.password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -58,11 +58,10 @@ public class LoginActivity extends AppCompatActivity {
         button.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (isPressed == false) {
-                    isPressed = true;
-                    button.setBackground(getDrawable(R.drawable.login_button1));
-                    attemptLogin();
-                }
+                button.setClickable(true);
+                button.setBackground(getDrawable(R.drawable.login_button1));
+                attemptLogin();
+
             }
         });
         try {
@@ -74,13 +73,13 @@ public class LoginActivity extends AppCompatActivity {
                 startActivity(intent);
                 finish();
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             uiError("数据异常，请重启应用");
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.clear();
             editor.commit();
         }
-        mUsernameView.setText("g@g.g");
+        mUsernameView.setText("bie@qq.com");
         mPasswordView.setText("Aa1111.");
     }
 
@@ -102,6 +101,7 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    /* 判断账号密码是否为空，启动loginRunnable */
     private void attemptLogin() {
         mUsernameView.setError(null);
         mPasswordView.setError(null);
@@ -123,7 +123,7 @@ public class LoginActivity extends AppCompatActivity {
         }
         if (cancel) {
             focusView.requestFocus();
-            isPressed = false;
+            button.setClickable(true);
             button.setBackground(getDrawable(R.drawable.login_button));
         } else {
             new Thread(loginRunnable).start();
@@ -136,7 +136,7 @@ public class LoginActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    /* 登录并获取Access_Token */
+    /* 登录并获取Access_Token，启动MainActivity */
     Runnable loginRunnable = new Runnable() {
         @Override
         public void run() {
@@ -159,7 +159,7 @@ public class LoginActivity extends AppCompatActivity {
                 String responseData = response.body().string();
                 Log.e("Lonin responseData: ", responseData);
                 if (responseData != null) {
-                    if (String.valueOf(response.code()).charAt(0)=='2') {
+                    if (String.valueOf(response.code()).charAt(0) == '2') {
                         try {
                             Gson gson = new Gson();
                             AccessTokenGson accessTokenGson = gson.fromJson(responseData, AccessTokenGson.class);
@@ -168,12 +168,11 @@ public class LoginActivity extends AppCompatActivity {
                             authorization = bearer + " " + assess_token;
                             sharedPreferences = getSharedPreferences("authorization", Context.MODE_PRIVATE);
                             sharedPreferences.edit().putString("authorization", authorization).commit();
-                        }catch (Exception e){
+                        } catch (Exception e) {
                             e.printStackTrace();
                             uiToast("服务器维护中");
                         }
                         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                        intent.putExtra("Authorization", authorization);
                         startActivity(intent);
                         finish();
                     } else {
@@ -194,13 +193,13 @@ public class LoginActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     button.setBackground(getDrawable(R.drawable.login_button));
-                    isPressed = false;
+                    button.setClickable(true);
                 }
             });
         }
     };
 
-    /* 广播接收器，用以来自MainActivity注销的跳转并清空本地token */
+    /* 广播接收器，用以来自MainActivity注销的跳转并清空本地token *//*
     public static class MyBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -208,6 +207,6 @@ public class LoginActivity extends AppCompatActivity {
             editor.clear();
             editor.commit();
         }
-    }
+    }*/
 }
 
